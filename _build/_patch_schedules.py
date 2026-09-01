@@ -1,22 +1,25 @@
-<!doctype html>
-<html lang="ko">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>시간표 | ANTAEAN 관리자</title>
-    <meta name="robots" content="noindex, nofollow">
-    <link rel="icon" href="../assets/img/brand/antaean-logo.jpg">
-    <link rel="stylesheet" href="../assets/css/admin.css">
-  </head>
-  <body>
-    <div class="a-wrap">
-      <nav class="a-side"></nav>
-      <main class="a-main">
-        <div class="a-head">
-          <h1>시간표</h1>
-          <p>지점별 수업 시간표입니다. 요일과 반은 여러 개를 함께 고를 수 있습니다.</p>
-        </div>
-        <div class="card">
+# -*- coding: utf-8 -*-
+"""시간표 화면을 다중 선택(반·요일) + 분 단위 시각으로 교체하고,
+   사이드바에 선수단 메뉴를 추가한다. 1회용."""
+import io, os, re
+
+ROOT = os.path.dirname(os.path.abspath(__file__))
+
+# ---------------------------------------------------------------- 1) 사이드바
+p = os.path.join(ROOT, "..", "assets", "js", "admin.js")
+s = io.open(p, encoding="utf-8").read()
+if "athletes.html" not in s:
+    s = s.replace(
+        '    { href: "coaches.html",   label: "지도자",     key: "coaches" },',
+        '    { href: "coaches.html",   label: "지도자",     key: "coaches" },\n'
+        '    { href: "athletes.html",  label: "선수단",     key: "athletes" },')
+    io.open(p, "w", encoding="utf-8", newline="\n").write(s)
+    print("admin.js: 선수단 메뉴 추가")
+else:
+    print("admin.js: 선수단 메뉴 이미 있음")
+
+# ---------------------------------------------------------------- 2) 시간표 화면
+MAIN = '''        <div class="card">
           <div class="actions" style="margin-bottom:12px">
             <button class="btn btn-line btn-sm" data-b="songdo">송도점</button>
             <button class="btn btn-line btn-sm" data-b="baegot">배곧점</button>
@@ -43,15 +46,9 @@
           <div class="actions" style="margin-top:14px">
             <button class="btn btn-primary" id="save">전체 저장</button>
           </div>
-        </div>
-      </main>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
-    <script src="../assets/js/config.js"></script>
-    <script src="../assets/js/db.js"></script>
-    <script src="../assets/js/admin.js"></script>
-    <script>
-      (async function () {
+        </div>'''
+
+SCRIPT = r'''      (async function () {
         if (!(await Admin.guard("schedules"))) return;
         var DAYS = ["월", "화", "수", "목", "금", "토", "일"];
         var branch = "songdo", progs = [], rows = [];
@@ -159,7 +156,19 @@
         });
 
         load();
-      })();
-    </script>
-  </body>
-</html>
+      })();'''
+
+p = os.path.join(ROOT, "build-admin.py")
+s = io.open(p, encoding="utf-8").read()
+start = s.index('# ============================================================ schedules')
+end = s.index('# ============================================================ coaches')
+block = (
+    '# ============================================================ schedules\n'
+    'page("schedules.html", "시간표", "시간표",\n'
+    '     "지점별 수업 시간표입니다. 요일과 반은 여러 개를 함께 고를 수 있습니다.",\n'
+    '     ' + repr(MAIN) + ',\n'
+    '     ' + repr(SCRIPT) + ')\n\n'
+)
+s = s[:start] + block + s[end:]
+io.open(p, "w", encoding="utf-8", newline="\n").write(s)
+print("build-admin.py: 시간표 화면 교체")

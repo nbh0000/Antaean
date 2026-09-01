@@ -356,84 +356,9 @@ page("programs.html", "프로그램", "프로그램",
 
 # ============================================================ schedules
 page("schedules.html", "시간표", "시간표",
-     "지점별 수업 시간표입니다. 한 줄이 홈페이지 표의 한 줄이 됩니다.",
-     """        <div class="card">
-          <div class="actions" style="margin-bottom:12px">
-            <button class="btn btn-line btn-sm" data-b="songdo">송도점</button>
-            <button class="btn btn-line btn-sm" data-b="baegot">배곧점</button>
-            <span class="sp" style="flex:1"></span>
-            <button class="btn btn-primary btn-sm" id="add">줄 추가</button>
-          </div>
-          <table><thead><tr><th style="width:90px">요일</th><th style="width:150px">시간</th><th style="width:150px">반</th><th>비고</th><th style="width:90px">순서</th><th></th></tr></thead>
-          <tbody id="rows"></tbody></table>
-          <div class="actions" style="margin-top:14px"><button class="btn btn-primary" id="save">전체 저장</button></div>
-        </div>""",
-     """      (async function () {
-        if (!(await Admin.guard("schedules"))) return;
-        var DAYS = ["월", "화", "수", "목", "금", "토", "일"];
-        var branch = "songdo", progs = [], rows = [];
-        progs = await AF.list("programs", function (q) { return q.order("sort"); });
-
-        function opts(sel, arr, val) {
-          return arr.map(function (o) {
-            var v = o.v === undefined ? o : o.v, t = o.t === undefined ? o : o.t;
-            return '<option value="' + AF.esc(v) + '"' + (String(val) === String(v) ? " selected" : "") + ">" + AF.esc(t) + "</option>";
-          }).join("");
-        }
-        function draw() {
-          document.querySelectorAll("[data-b]").forEach(function (b) {
-            b.classList.toggle("btn-primary", b.dataset.b === branch);
-            b.classList.toggle("btn-line", b.dataset.b !== branch);
-          });
-          var tb = document.getElementById("rows");
-          if (!rows.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">등록된 시간표가 없습니다. \\'줄 추가\\'를 눌러 입력하세요.</td></tr>'; return; }
-          tb.innerHTML = rows.map(function (r, i) {
-            return '<tr data-i="' + i + '">' +
-              '<td><select data-k="day">' + opts(0, DAYS, r.day) + "</select></td>" +
-              '<td><input data-k="time_range" type="text" value="' + AF.esc(r.time_range) + '" placeholder="16:00-17:00"></td>' +
-              '<td><select data-k="program_id"><option value="">-</option>' +
-                progs.map(function (p) { return '<option value="' + p.id + '"' + (r.program_id === p.id ? " selected" : "") + ">" + AF.esc(p.name) + "</option>"; }).join("") + "</select></td>" +
-              '<td><input data-k="note" type="text" value="' + AF.esc(r.note || "") + '"></td>' +
-              '<td><input data-k="sort" type="text" inputmode="numeric" value="' + (r.sort || 0) + '"></td>' +
-              '<td class="rt"><button class="btn btn-danger btn-sm" data-del="' + i + '">삭제</button></td></tr>';
-          }).join("");
-        }
-        async function load() {
-          rows = await AF.list("schedules", function (q) { return q.eq("branch_id", branch).order("sort"); });
-          draw();
-        }
-        function collect() {
-          document.querySelectorAll("#rows tr[data-i]").forEach(function (tr) {
-            var r = rows[+tr.dataset.i];
-            tr.querySelectorAll("[data-k]").forEach(function (el) {
-              r[el.dataset.k] = el.dataset.k === "sort" ? (parseInt(el.value, 10) || 0) : el.value;
-            });
-          });
-        }
-        document.addEventListener("click", async function (e) {
-          var b = e.target.closest("[data-b]");
-          if (b) { collect(); branch = b.dataset.b; await load(); return; }
-          if (e.target.id === "add") { collect(); rows.push({ branch_id: branch, day: "월", time_range: "", program_id: null, note: "", sort: rows.length }); draw(); return; }
-          var d = e.target.closest("[data-del]");
-          if (d) {
-            var i = +d.dataset.del, r = rows[i];
-            if (r.id) { if (!(await Admin.remove("schedules", r.id, "이 줄"))) return; }
-            collect(); rows.splice(i, 1); draw(); return;
-          }
-          if (e.target.id === "save") {
-            collect();
-            var bad = rows.filter(function (r) { return !r.time_range.trim(); });
-            if (bad.length) { Admin.toast("시간이 비어 있는 줄이 있습니다.", true); return; }
-            for (var i = 0; i < rows.length; i++) {
-              var r = rows[i]; r.branch_id = branch;
-              if (!r.program_id) r.program_id = null;
-              await Admin.save("schedules", r, { message: "" });
-            }
-            Admin.toast("시간표를 저장했습니다."); load();
-          }
-        });
-        load();
-      })();""")
+     "지점별 수업 시간표입니다. 요일과 반은 여러 개를 함께 고를 수 있습니다.",
+     '        <div class="card">\n          <div class="actions" style="margin-bottom:12px">\n            <button class="btn btn-line btn-sm" data-b="songdo">송도점</button>\n            <button class="btn btn-line btn-sm" data-b="baegot">배곧점</button>\n            <span style="flex:1"></span>\n            <button class="btn btn-primary btn-sm" id="add">줄 추가</button>\n          </div>\n          <p class="hint" style="margin:0 0 12px">\n            요일과 반은 여러 개를 함께 고를 수 있습니다.\n            (예: 월·수·금 16:00~17:00 에 취미반 + 꿈나무반)\n          </p>\n          <div style="overflow-x:auto">\n            <table>\n              <thead><tr>\n                <th style="min-width:210px">요일</th>\n                <th style="min-width:170px">시간</th>\n                <th style="min-width:230px">반</th>\n                <th style="min-width:140px">비고</th>\n                <th style="width:72px">순서</th>\n                <th style="width:70px"></th>\n              </tr></thead>\n              <tbody id="rows"></tbody>\n            </table>\n          </div>\n          <div class="actions" style="margin-top:14px">\n            <button class="btn btn-primary" id="save">전체 저장</button>\n          </div>\n        </div>',
+     '      (async function () {\n        if (!(await Admin.guard("schedules"))) return;\n        var DAYS = ["월", "화", "수", "목", "금", "토", "일"];\n        var branch = "songdo", progs = [], rows = [];\n        progs = await AF.list("programs", function (q) { return q.order("sort"); });\n\n        function chips(name, list, chosen, key) {\n          return \'<div class="chips">\' + list.map(function (o) {\n            var v = o.v === undefined ? o : o.v;\n            var t = o.t === undefined ? o : o.t;\n            var on = (chosen || []).indexOf(v) >= 0;\n            return \'<label class="chip"><input type="checkbox" data-\' + key + \'="\' + AF.esc(v) + \'"\' +\n              (on ? " checked" : "") + "> " + AF.esc(t) + "</label>";\n          }).join("") + "</div>";\n        }\n\n        function draw() {\n          document.querySelectorAll("[data-b]").forEach(function (b) {\n            b.classList.toggle("btn-primary", b.dataset.b === branch);\n            b.classList.toggle("btn-line", b.dataset.b !== branch);\n          });\n          var tb = document.getElementById("rows");\n          if (!rows.length) {\n            tb.innerHTML = \'<tr><td colspan="6" class="empty">등록된 시간표가 없습니다. \\\'줄 추가\\\'를 눌러 입력하세요.</td></tr>\';\n            return;\n          }\n          tb.innerHTML = rows.map(function (r, i) {\n            return \'<tr data-i="\' + i + \'">\' +\n              "<td>" + chips("days", DAYS, r.days || [], "day") + "</td>" +\n              \'<td><div class="time-pair">\' +\n                \'<input data-k="start_time" type="time" step="60" value="\' + AF.esc(r.start_time || "") + \'">\' +\n                "<span>~</span>" +\n                \'<input data-k="end_time" type="time" step="60" value="\' + AF.esc(r.end_time || "") + \'">\' +\n              "</div></td>" +\n              "<td>" + chips("progs", progs.map(function (p) { return { v: p.id, t: p.name }; }), r.program_ids || [], "prog") + "</td>" +\n              \'<td><input data-k="note" type="text" value="\' + AF.esc(r.note || "") + \'"></td>\' +\n              \'<td><input data-k="sort" type="text" inputmode="numeric" value="\' + (r.sort || 0) + \'"></td>\' +\n              \'<td class="rt"><button class="btn btn-danger btn-sm" data-del="\' + i + \'">삭제</button></td></tr>\';\n          }).join("");\n        }\n\n        async function load() {\n          rows = await AF.list("schedules", function (q) {\n            return q.eq("branch_id", branch).order("sort");\n          });\n          draw();\n        }\n\n        function collect() {\n          document.querySelectorAll("#rows tr[data-i]").forEach(function (tr) {\n            var r = rows[+tr.dataset.i];\n            if (!r) return;\n            tr.querySelectorAll("[data-k]").forEach(function (el) {\n              r[el.dataset.k] = el.dataset.k === "sort" ? (parseInt(el.value, 10) || 0) : el.value;\n            });\n            r.days = Array.prototype.map.call(\n              tr.querySelectorAll("[data-day]:checked"), function (el) { return el.dataset.day; });\n            r.program_ids = Array.prototype.map.call(\n              tr.querySelectorAll("[data-prog]:checked"), function (el) { return el.dataset.prog; });\n          });\n        }\n\n        document.addEventListener("click", async function (e) {\n          var b = e.target.closest("[data-b]");\n          if (b) { collect(); branch = b.dataset.b; await load(); return; }\n\n          if (e.target.id === "add") {\n            collect();\n            rows.push({\n              branch_id: branch, days: [], program_ids: [],\n              start_time: "", end_time: "", note: "", sort: rows.length\n            });\n            draw();\n            return;\n          }\n\n          var d = e.target.closest("[data-del]");\n          if (d) {\n            var i = +d.dataset.del, r = rows[i];\n            if (r.id && !(await Admin.remove("schedules", r.id, "이 줄"))) return;\n            collect();\n            rows.splice(i, 1);\n            draw();\n            return;\n          }\n\n          if (e.target.id === "save") {\n            collect();\n            var bad = rows.filter(function (r) { return !r.start_time || !r.end_time; });\n            if (bad.length) { Admin.toast("시작·종료 시각이 비어 있는 줄이 있습니다.", true); return; }\n            var noDay = rows.filter(function (r) { return !r.days.length; });\n            if (noDay.length) { Admin.toast("요일을 고르지 않은 줄이 있습니다.", true); return; }\n\n            for (var i = 0; i < rows.length; i++) {\n              var r = rows[i];\n              r.branch_id = branch;\n              /* 예전 단일 컬럼도 함께 채워 두어 이전 데이터와 섞여도 깨지지 않게 한다 */\n              r.day = r.days[0] || null;\n              r.program_id = null;\n              r.time_range = r.start_time + "-" + r.end_time;\n              await Admin.save("schedules", r, { message: "" });\n            }\n            Admin.toast("시간표를 저장했습니다.");\n            load();\n          }\n        });\n\n        load();\n      })();')
 
 # ============================================================ coaches
 page("coaches.html", "지도자", "지도자",

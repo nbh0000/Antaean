@@ -50,8 +50,17 @@
         '<div class="table-scroll"><table class="sched">' +
         "<thead><tr><th>요일</th><th>시간</th><th>반</th><th>비고</th></tr></thead><tbody>" +
         rows.map(function (r) {
-          return "<tr><td>" + esc(r.day) + "</td><td>" + esc(r.time_range) + "</td>" +
-                 "<td>" + esc(byId[r.program_id] || "") + "</td>" +
+          /* 요일·반은 여러 개일 수 있다. 예전 단일 컬럼도 함께 받아 준다. */
+          var days = (r.days && r.days.length) ? r.days : (r.day ? [r.day] : []);
+          var pids = (r.program_ids && r.program_ids.length)
+            ? r.program_ids : (r.program_id ? [r.program_id] : []);
+          var names = pids.map(function (id) { return byId[id] || ""; }).filter(Boolean);
+          var time = (r.start_time && r.end_time)
+            ? r.start_time + " ~ " + r.end_time
+            : (r.time_range || "");
+          return "<tr><td>" + esc(days.join(" · ")) + "</td>" +
+                 "<td>" + esc(time) + "</td>" +
+                 "<td>" + esc(names.join(" · ")) + "</td>" +
                  "<td>" + esc(r.note || "") + "</td></tr>";
         }).join("") + "</tbody></table></div>";
     }

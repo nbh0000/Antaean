@@ -12,6 +12,7 @@ window.Admin = (function () {
     { href: "programs.html",  label: "프로그램",   key: "programs" },
     { href: "schedules.html", label: "시간표",     key: "schedules" },
     { href: "coaches.html",   label: "지도자",     key: "coaches" },
+    { href: "athletes.html",  label: "선수단",     key: "athletes" },
     { href: "gallery.html",   label: "갤러리",     key: "gallery" },
     { href: "branches.html",  label: "지점 정보",  key: "branches" }
   ];

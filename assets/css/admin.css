@@ -148,3 +148,23 @@ td.rt { text-align: right; white-space: nowrap; }
   .a-side a { white-space: nowrap; }
   table { font-size: 13px; }
 }
+
+/* ---------- 다중 선택 칩 (요일 / 반) ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid var(--line); border-radius: 3px;
+  padding: 5px 9px; font-size: 13px; color: var(--soft);
+  cursor: pointer; user-select: none; background: #fff;
+  transition: all .15s ease;
+}
+.chip input { accent-color: var(--navy); margin: 0; }
+.chip:hover { border-color: var(--navy); }
+.chip:has(input:checked) {
+  border-color: var(--navy); background: var(--navy); color: #fff; font-weight: 600;
+}
+
+/* ---------- 시작 ~ 종료 시각 ---------- */
+.time-pair { display: flex; align-items: center; gap: 6px; }
+.time-pair input { width: 100%; min-width: 68px; padding: 8px 6px; text-align: center; }
+.time-pair span { color: var(--soft); flex: 0 0 auto; }
