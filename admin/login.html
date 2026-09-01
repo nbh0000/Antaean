@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>로그인 | ANTAEAN 관리자</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" href="../assets/img/brand/antaean-logo.jpg">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+  </head>
+  <body>
+    <div class="login-wrap">
+      <form class="login-box" id="f">
+        <h1>ANTAEAN 관리자</h1>
+        <p class="hint">클럽에서 발급받은 이메일과 비밀번호로 로그인하세요.</p>
+        <div class="field">
+          <label for="email">이메일</label>
+          <input id="email" type="email" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="pw">비밀번호</label>
+          <input id="pw" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn-primary" type="submit" id="go">로그인</button>
+        <p class="err" id="err"></p>
+      </form>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/db.js"></script>
+
+    <script>
+      var f = document.getElementById("f"), err = document.getElementById("err"), go = document.getElementById("go");
+      if (!AF.ready) {
+        err.textContent = "assets/js/config.js 에 Supabase 주소와 anon 키를 먼저 넣어 주세요.";
+        go.disabled = true;
+      } else {
+        AF.session().then(function (s) { if (s) location.replace("index.html"); });
+      }
+      f.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        err.textContent = ""; go.disabled = true; go.textContent = "확인 중…";
+        try {
+          await AF.signIn(document.getElementById("email").value.trim(), document.getElementById("pw").value);
+          location.replace("index.html");
+        } catch (ex) {
+          err.textContent = "이메일 또는 비밀번호가 올바르지 않습니다.";
+          go.disabled = false; go.textContent = "로그인";
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+# 고객이 보낸 원본 자료 — 공개 저장소에 올리지 않는다
+content/
+
+# 격리한 파일 (실명 아동 사진 등)
+_removed/
+
+# 임시 파일
+_c.mjs
+_chk.txt
+_syntax_check.mjs
+*.tmp

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>대시보드 | ANTAEAN 관리자</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" href="../assets/img/brand/antaean-logo.jpg">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+  </head>
+  <body>
+    <div class="a-wrap">
+      <nav class="a-side"></nav>
+      <main class="a-main">
+        <div class="a-head">
+          <h1>대시보드</h1>
+          <p>새로 들어온 문의를 먼저 확인하세요. 왼쪽 메뉴에서 홈페이지 내용을 수정할 수 있습니다.</p>
+        </div>
+        <div class="stats">
+          <div class="stat hot"><span>확인하지 않은 문의</span><b id="s-new">–</b></div>
+          <div class="stat"><span>전체 문의</span><b id="s-all">–</b></div>
+          <div class="stat"><span>등록된 공지</span><b id="s-notice">–</b></div>
+          <div class="stat"><span>등록된 사진</span><b id="s-gal">–</b></div>
+        </div>
+        <div class="card">
+          <h2>최근 문의 5건</h2>
+          <p class="hint">이름을 누르면 문의함에서 자세히 볼 수 있습니다.</p>
+          <table><thead><tr><th>받은 날짜</th><th>이름</th><th>희망 지점</th><th>연락처</th><th>상태</th></tr></thead>
+          <tbody id="recent"><tr><td colspan="5" class="empty">불러오는 중…</td></tr></tbody></table>
+        </div>
+      </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/db.js"></script>
+    <script src="../assets/js/admin.js"></script>
+    <script>
+      (async function () {
+        if (!(await Admin.guard("home"))) return;
+        var cnt = async function (t, f) {
+          var q = AF.client.from(t).select("id", { count: "exact", head: true });
+          if (f) q = f(q);
+          var r = await q; return r.count || 0;
+        };
+        document.getElementById("s-new").textContent    = await cnt("inquiries", function (q) { return q.eq("status", "new"); });
+        document.getElementById("s-all").textContent    = await cnt("inquiries");
+        document.getElementById("s-notice").textContent = await cnt("notices");
+        document.getElementById("s-gal").textContent    = await cnt("gallery");
+
+        var rows = await AF.list("inquiries", function (q) { return q.order("created_at", { ascending: false }).limit(5); });
+        var tb = document.getElementById("recent");
+        if (!rows.length) { tb.innerHTML = '<tr><td colspan="5" class="empty">아직 들어온 문의가 없습니다.</td></tr>'; return; }
+        var BR = { songdo: "송도점", baegot: "배곧점" };
+        var statusTag = function (st) {
+          return st === "new" ? '<span class="tag new">신규</span>' : '<span class="tag done">연락완료</span>';
+        };
+        tb.innerHTML = rows.map(function (r) {
+          return '<tr class="' + (r.status === "new" ? "unread" : "") + '">' +
+            "<td>" + AF.fmtDate(r.created_at) + "</td>" +
+            '<td><a href="inquiries.html#' + r.id + '"><b>' + AF.esc(r.name) + "</b></a></td>" +
+            "<td>" + AF.esc(BR[r.branch_id] || r.branch_id || "") + "</td>" +
+            '<td><a href="tel:' + AF.digits(r.phone) + '">' + AF.esc(r.phone) + "</a></td>" +
+            "<td>" + statusTag(r.status) + "</td></tr>";
+        }).join("");
+      })();
+    </script>
+  </body>
+</html>

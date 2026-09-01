@@ -1,0 +1,40 @@
+txt 원문·허용 라벨 외 문장: 총 31건
+
+### 문서 제목 (title / og:title) — 6건
+  [index.html] 엔티언펜싱클럽 | ANTAEAN FENCING CLUB
+  [about.html] 학원소개 | 엔티언펜싱클럽
+  [programs.html] 프로그램 | 엔티언펜싱클럽
+  [coaching.html] 강사진 | 엔티언펜싱클럽
+  [contact.html] 오시는 길 | 엔티언펜싱클럽
+  [trial.html] 체험수업 / 상담신청 | 엔티언펜싱클럽
+
+### 이미지 대체텍스트 (alt) — 13건
+  [index.html] ANTAEAN FENCING CLUB 로고
+  [about.html] ANTAEAN FENCING CLUB 로고
+  [about.html] 배곧점 피스트 전경
+  [about.html] 배곧점 피스트와 클럽 로고
+  [about.html] 배곧점 장비 보관 공간
+  [about.html] 배곧점 유니폼과 마스크 보관 공간
+  [about.html] 배곧점 라운지
+  [about.html] 배곧점 출입구
+  [programs.html] ANTAEAN FENCING CLUB 로고
+  [coaching.html] ANTAEAN FENCING CLUB 로고
+  [contact.html] ANTAEAN FENCING CLUB 로고
+  [contact.html] 배곧점이 있는 골든프라자 건물
+  [trial.html] ANTAEAN FENCING CLUB 로고
+
+### 접근성 라벨 (aria-label) — 6건
+  [index.html] ANTAEAN FENCING CLUB 홈
+  [about.html] ANTAEAN FENCING CLUB 홈
+  [programs.html] ANTAEAN FENCING CLUB 홈
+  [coaching.html] ANTAEAN FENCING CLUB 홈
+  [contact.html] ANTAEAN FENCING CLUB 홈
+  [trial.html] ANTAEAN FENCING CLUB 홈
+
+### 화면에 보이는 본문 — 6건
+  [index.html] 엔티언펜싱클럽 | ANTAEAN FENCING CLUB
+  [about.html] 학원소개 | 엔티언펜싱클럽
+  [programs.html] 프로그램 | 엔티언펜싱클럽
+  [coaching.html] 강사진 | 엔티언펜싱클럽
+  [contact.html] 오시는 길 | 엔티언펜싱클럽
+  [trial.html] 체험수업 / 상담신청 | 엔티언펜싱클럽

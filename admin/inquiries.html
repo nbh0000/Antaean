@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>문의함 | ANTAEAN 관리자</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" href="../assets/img/brand/antaean-logo.jpg">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+  </head>
+  <body>
+    <div class="a-wrap">
+      <nav class="a-side"></nav>
+      <main class="a-main">
+        <div class="a-head">
+          <h1>문의함</h1>
+          <p>홈페이지 체험·상담 신청이 여기로 들어옵니다. 연락을 마쳤으면 '연락완료'로 바꿔 두세요.</p>
+        </div>
+        <div class="card">
+          <div class="actions" style="margin-bottom:14px">
+            <button class="btn btn-line btn-sm" data-f="all">전체</button>
+            <button class="btn btn-line btn-sm" data-f="new">신규만</button>
+            <button class="btn btn-line btn-sm" data-f="contacted">연락완료만</button>
+          </div>
+          <table><thead><tr><th>받은 날짜</th><th>이름</th><th>연령</th><th>지점</th><th>연락처</th><th>경험</th><th>프로그램</th><th>상태</th><th></th></tr></thead>
+          <tbody id="rows"><tr><td colspan="9" class="empty">불러오는 중…</td></tr></tbody></table>
+        </div>
+        <div class="card" id="detail" hidden>
+          <h2>문의 상세</h2>
+          <p class="hint">메모는 클럽 내부용입니다. 홈페이지에는 보이지 않습니다.</p>
+          <div id="d-body"></div>
+        </div>
+      </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/db.js"></script>
+    <script src="../assets/js/admin.js"></script>
+    <script>
+      (async function () {
+        if (!(await Admin.guard("inquiries"))) return;
+        var BR = { songdo: "송도점", baegot: "배곧점" };
+        var PG = { hobby: "취미반", junior: "꿈나무반", athlete: "선수반", adult: "성인반" };
+        var statusTag = function (st) {
+          return st === "new" ? '<span class="tag new">신규</span>' : '<span class="tag done">연락완료</span>';
+        };
+        var all = [], filter = "all";
+
+        async function load() {
+          all = await AF.list("inquiries", function (q) { return q.order("created_at", { ascending: false }); });
+          render();
+          if (location.hash) open(location.hash.slice(1));
+        }
+        function render() {
+          var rows = all.filter(function (r) { return filter === "all" || r.status === filter; });
+          var tb = document.getElementById("rows");
+          if (!rows.length) { tb.innerHTML = '<tr><td colspan="9" class="empty">해당하는 문의가 없습니다.</td></tr>'; return; }
+          tb.innerHTML = rows.map(function (r) {
+            return '<tr class="' + (r.status === "new" ? "unread" : "") + '">' +
+              "<td>" + AF.fmtDate(r.created_at) + "</td>" +
+              "<td><b>" + AF.esc(r.name) + "</b></td>" +
+              "<td>" + AF.esc(r.age || "") + "</td>" +
+              "<td>" + AF.esc(BR[r.branch_id] || "") + "</td>" +
+              '<td><a href="tel:' + AF.digits(r.phone) + '">' + AF.esc(r.phone) + "</a></td>" +
+              "<td>" + AF.esc(r.experience || "") + "</td>" +
+              "<td>" + AF.esc(PG[r.program_id] || "") + "</td>" +
+              "<td>" + statusTag(r.status) + "</td>" +
+              '<td class="rt"><button class="btn btn-line btn-sm" data-open="' + r.id + '">열기</button></td></tr>';
+          }).join("");
+        }
+        function open(id) {
+          var r = all.filter(function (x) { return x.id === id; })[0];
+          if (!r) return;
+          var d = document.getElementById("detail");
+          d.hidden = false;
+          document.getElementById("d-body").innerHTML =
+            '<div class="row">' +
+            "<div><b>이름</b><br>" + AF.esc(r.name) + "</div>" +
+            "<div><b>연령</b><br>" + AF.esc(r.age || "-") + "</div>" +
+            "<div><b>희망 지점</b><br>" + AF.esc(BR[r.branch_id] || "-") + "</div>" +
+            '<div><b>연락처</b><br><a href="tel:' + AF.digits(r.phone) + '">' + AF.esc(r.phone) + "</a></div>" +
+            "<div><b>펜싱 경험 여부</b><br>" + AF.esc(r.experience || "-") + "</div>" +
+            "<div><b>희망 프로그램</b><br>" + AF.esc(PG[r.program_id] || "-") + "</div>" +
+            "</div>" +
+            '<div class="field" style="margin-top:14px"><label>문의내용</label><div style="white-space:pre-wrap">' + (AF.esc(r.message) || "-") + "</div></div>" +
+            '<div class="field"><label for="memo">메모 (내부용)</label><textarea id="memo">' + AF.esc(r.memo || "") + "</textarea></div>" +
+            '<div class="actions">' +
+            '<button class="btn btn-primary" id="d-save">메모 저장</button>' +
+            '<button class="btn btn-line" id="d-status">' + (r.status === "new" ? "연락완료로 바꾸기" : "신규로 되돌리기") + "</button>" +
+            '<button class="btn btn-danger" id="d-del">삭제</button>' +
+            "</div>";
+          d.scrollIntoView({ behavior: "smooth", block: "start" });
+
+          document.getElementById("d-save").addEventListener("click", async function () {
+            await Admin.save("inquiries", { id: r.id, memo: document.getElementById("memo").value }, { message: "메모를 저장했습니다." });
+            r.memo = document.getElementById("memo").value;
+          });
+          document.getElementById("d-status").addEventListener("click", async function () {
+            var next = r.status === "new" ? "contacted" : "new";
+            await Admin.save("inquiries", { id: r.id, status: next }, { message: "상태를 바꿨습니다." });
+            r.status = next; render(); open(r.id); Admin.refreshBadge();
+          });
+          document.getElementById("d-del").addEventListener("click", async function () {
+            if (await Admin.remove("inquiries", r.id, AF.esc(r.name) + " 님의 문의")) {
+              d.hidden = true; await load(); Admin.refreshBadge();
+            }
+          });
+        }
+        document.addEventListener("click", function (e) {
+          var b = e.target.closest("[data-open]"); if (b) open(b.dataset.open);
+          var f = e.target.closest("[data-f]"); if (f) { filter = f.dataset.f; render(); }
+        });
+        load();
+      })();
+    </script>
+  </body>
+</html>

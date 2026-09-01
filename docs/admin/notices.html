@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>공지사항 | ANTAEAN 관리자</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" href="../assets/img/brand/antaean-logo.jpg">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+  </head>
+  <body>
+    <div class="a-wrap">
+      <nav class="a-side"></nav>
+      <main class="a-main">
+        <div class="a-head">
+          <h1>공지사항</h1>
+          <p>홈페이지 메인과 공지 목록에 표시됩니다. '상단 고정'을 켜면 목록 맨 위에 붙습니다.</p>
+        </div>
+        <div class="card">
+          <h2 id="form-title">새 공지 작성</h2>
+          <p class="hint">제목만 넣어도 등록됩니다. 사진은 한 장까지 올릴 수 있습니다.</p>
+          <form id="f">
+            <input type="hidden" id="id">
+            <div class="field"><label for="title">제목</label><input id="title" type="text" required></div>
+            <div class="field"><label for="body">내용</label><textarea id="body"></textarea>
+              <div class="hint">줄바꿈은 그대로 표시됩니다.</div></div>
+            <div class="field"><label for="img">사진</label><input id="img" type="file" accept="image/*">
+              <div class="hint">올리면 자동으로 가로 1600px로 줄여 저장합니다.</div>
+              <div id="preview" style="margin-top:8px"></div></div>
+            <div class="field"><label class="check"><input id="pinned" type="checkbox"> 상단 고정</label></div>
+            <div class="actions">
+              <button class="btn btn-primary" type="submit" id="go">등록</button>
+              <button class="btn btn-line" type="button" id="reset" hidden>새로 작성</button>
+            </div>
+          </form>
+        </div>
+        <div class="card">
+          <h2>등록된 공지</h2>
+          <table><thead><tr><th>날짜</th><th>제목</th><th>고정</th><th></th></tr></thead>
+          <tbody id="rows"><tr><td colspan="4" class="empty">불러오는 중…</td></tr></tbody></table>
+        </div>
+      </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/db.js"></script>
+    <script src="../assets/js/admin.js"></script>
+    <script>
+      (async function () {
+        if (!(await Admin.guard("notices"))) return;
+        var f = document.getElementById("f"), rows = document.getElementById("rows");
+        var imageUrl = null;
+
+        document.getElementById("img").addEventListener("change", async function (e) {
+          var file = e.target.files[0]; if (!file) return;
+          Admin.toast("사진을 올리는 중입니다…");
+          try {
+            imageUrl = await AF.upload("notices", file);
+            document.getElementById("preview").innerHTML = '<img class="thumb" src="' + imageUrl + '">';
+            Admin.toast("사진을 올렸습니다.");
+          } catch (ex) { Admin.toast("사진을 올리지 못했습니다.", true); }
+        });
+
+        function reset() {
+          f.reset(); document.getElementById("id").value = ""; imageUrl = null;
+          document.getElementById("preview").innerHTML = "";
+          document.getElementById("form-title").textContent = "새 공지 작성";
+          document.getElementById("go").textContent = "등록";
+          document.getElementById("reset").hidden = true;
+        }
+        document.getElementById("reset").addEventListener("click", reset);
+
+        f.addEventListener("submit", async function (e) {
+          e.preventDefault();
+          var row = {
+            title: document.getElementById("title").value.trim(),
+            body: document.getElementById("body").value,
+            pinned: document.getElementById("pinned").checked
+          };
+          if (imageUrl) row.image_url = imageUrl;
+          var id = document.getElementById("id").value;
+          if (id) row.id = id;
+          await Admin.save("notices", row);
+          reset(); load();
+        });
+
+        async function load() {
+          var list = await AF.list("notices", function (q) {
+            return q.order("pinned", { ascending: false }).order("created_at", { ascending: false });
+          });
+          if (!list.length) { rows.innerHTML = '<tr><td colspan="4" class="empty">등록된 공지가 없습니다.</td></tr>'; return; }
+          rows.innerHTML = list.map(function (n) {
+            return "<tr><td>" + AF.fmtDate(n.created_at) + "</td>" +
+              "<td>" + (n.image_url ? '<img class="thumb" src="' + n.image_url + '" style="float:left;margin-right:10px">' : "") + AF.esc(n.title) + "</td>" +
+              "<td>" + (n.pinned ? "고정" : "") + "</td>" +
+              '<td class="rt"><button class="btn btn-line btn-sm" data-edit="' + n.id + '">수정</button> ' +
+              '<button class="btn btn-danger btn-sm" data-del="' + n.id + '">삭제</button></td></tr>';
+          }).join("");
+          window._notices = list;
+        }
+        document.addEventListener("click", async function (e) {
+          var ed = e.target.closest("[data-edit]");
+          if (ed) {
+            var n = window._notices.filter(function (x) { return x.id === ed.dataset.edit; })[0];
+            document.getElementById("id").value = n.id;
+            document.getElementById("title").value = n.title || "";
+            document.getElementById("body").value = n.body || "";
+            document.getElementById("pinned").checked = !!n.pinned;
+            imageUrl = n.image_url || null;
+            document.getElementById("preview").innerHTML = n.image_url ? '<img class="thumb" src="' + n.image_url + '">' : "";
+            document.getElementById("form-title").textContent = "공지 수정";
+            document.getElementById("go").textContent = "수정 저장";
+            document.getElementById("reset").hidden = false;
+            f.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+          var dl = e.target.closest("[data-del]");
+          if (dl && await Admin.remove("notices", dl.dataset.del, "이 공지")) load();
+        });
+        load();
+      })();
+    </script>
+  </body>
+</html>
