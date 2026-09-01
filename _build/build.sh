@@ -56,4 +56,5 @@ build facilities.html body-facilities.html facilities "시설안내 | 엔티언�
 build fencing.html    body-fencing.html    fencing    "펜싱 정보 | 엔티언펜싱클럽"     solid
 build athletes.html   body-athletes.html   athletes   "선수단 | 엔티언펜싱클럽"        solid
 build community.html  body-community.html  community  "커뮤니티 | 엔티언펜싱클럽"      solid
+build privacy.html    body-privacy.html    privacy    "개인정보처리방침 | 엔티언펜싱클럽" solid
 echo "done."
