@@ -971,3 +971,19 @@ table.sched tbody tr:hover { background: var(--grey); }
   to   { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .modal--done .done { animation: none; } }
+
+/* ============================================================
+   Mobile refinements
+   ============================================================ */
+@media (max-width: 560px) {
+  /* 1열이 되면 3:4 사진이 화면을 통째로 먹어 스크롤이 길어진다 */
+  .athlete__photo { aspect-ratio: 4 / 3; }
+  /* 전화/카카오톡 버튼은 한 줄에 반씩 채운다 */
+  .apply-direct { width: 100%; }
+  .apply-direct .btn { flex: 1 1 0; justify-content: center; }
+  .apply-actions > .btn { width: 100%; }
+  /* 지점 정보 라벨 열을 좁혀 주소가 덜 접히게 */
+  .dl { grid-template-columns: 66px 1fr; gap: 8px 10px; }
+  .branch__links { gap: 8px; }
+  .branch__links .btn { flex: 1 1 auto; justify-content: center; }
+}
