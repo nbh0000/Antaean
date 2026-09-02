@@ -2,3 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /_removed/
+
+Sitemap: https://antaean.kr/sitemap.xml

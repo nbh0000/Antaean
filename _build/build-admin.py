@@ -15,7 +15,7 @@ PAGE = """<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{title} | ANTAEAN 관리자</title>
     <meta name="robots" content="noindex, nofollow">
-    <link rel="icon" href="../assets/img/brand/antaean-logo.jpg">
+    <link rel="icon" href="../assets/img/brand/antaean-emblem.png">
     <link rel="stylesheet" href="../assets/css/admin.css">
   </head>
   <body>

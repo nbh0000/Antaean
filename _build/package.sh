@@ -32,7 +32,7 @@ cp -r assets/css assets/js assets/img "$DIST/assets"/
 rm -f "$DIST"/assets/img/hero/*-master-*.jpg
 
 # 4) 배포 설정
-cp _headers robots.txt "$DIST"/ 2>/dev/null || true
+cp _headers robots.txt sitemap.xml "$DIST"/ 2>/dev/null || true
 
 echo "── dist/ 준비 완료 ──"
 echo "  페이지   : $(ls "$DIST"/*.html | wc -l)개"
