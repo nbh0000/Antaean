@@ -18,6 +18,11 @@ build() {            # build <out.html> <body-fragment> <page-key> <title> <hero
   local canon="$out"
   [ "$out" = "index.html" ] && canon=""
 
+  # 404 는 대표 주소를 갖지 않는다. 색인도 막는다.
+  local head_links="    <meta property=\"og:url\" content=\"${SITE}/${canon}\">
+    <link rel=\"canonical\" href=\"${SITE}/${canon}\">"
+  [ "$out" = "404.html" ] && head_links='    <meta name="robots" content="noindex">'
+
   {
     cat <<HTML
 <!doctype html>
@@ -30,9 +35,8 @@ build() {            # build <out.html> <body-fragment> <page-key> <title> <hero
     <meta property="og:title" content="${title}">
     <meta property="og:description" content="${desc}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="${SITE}/${canon}">
     <meta property="og:image" content="${SITE}/assets/img/hero/foil-1600.jpg">
-    <link rel="canonical" href="${SITE}/${canon}">
+${head_links}
     <link rel="icon" href="assets/img/brand/antaean-emblem.png">
     <link rel="stylesheet" href="assets/css/site.css?v=${VER}">
   </head>
@@ -65,6 +69,7 @@ build fencing.html    body-fencing.html    fencing    "펜싱 정보 | 엔티언
 build athletes.html   body-athletes.html   athletes   "선수단 | 엔티언펜싱클럽"        solid
 build community.html  body-community.html  community  "커뮤니티 | 엔티언펜싱클럽"      solid
 build privacy.html    body-privacy.html    privacy    "개인정보처리방침 | 엔티언펜싱클럽" solid
+build 404.html        body-404.html        notfound   "페이지를 찾을 수 없습니다 | 엔티언펜싱클럽" solid
 
 # ---------------------------------------------------------------- sitemap
 {

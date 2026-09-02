@@ -8,6 +8,7 @@
   "workers_dev": true,
   "assets": {
     // 캐시·보안 헤더는 docs/_headers 파일이 그대로 적용된다.
-    "directory": "./docs"
+    "directory": "./docs",
+    "not_found_handling": "404-page"
   }
 }
