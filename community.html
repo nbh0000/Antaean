@@ -9,7 +9,7 @@
     <meta property="og:description" content="엔티언펜싱클럽은 펜싱을 처음 접하는 아이부터 전문적인 선수 활동을 목표로 하는 학생, 그리고 성인까지 함께할 수 있는 전문 펜싱클럽입니다.">
     <meta property="og:type" content="website">
     <link rel="icon" href="assets/img/brand/antaean-logo.jpg">
-    <link rel="stylesheet" href="assets/css/site.css?v=1788283571">
+    <link rel="stylesheet" href="assets/css/site.css?v=1788315203">
   </head>
   <body data-page="community">
     <a class="skip-link" href="#main">본문으로 이동</a>
@@ -17,7 +17,7 @@
     <header class="hdr" data-hdr data-hdr-solid>
       <div class="hdr__inner">
         <a class="hdr__logo" href="index.html" aria-label="ANTAEAN FENCING CLUB 홈">
-          <span class="hdr__plate"><img src="assets/img/brand/antaean-logo.jpg" alt="ANTAEAN FENCING CLUB 로고"></span>
+          <span class="hdr__plate"><img src="assets/img/brand/antaean-emblem.png" alt="ANTAEAN FENCING CLUB 로고"></span>
           <span class="hdr__word">ANTAEAN<small>FENCING CLUB</small></span>
         </a>
 
@@ -198,7 +198,7 @@
             <p>COMMUNITY</p>
             <h2>클럽 일상</h2>
           </div>
-          <div class="gal" data-stagger="80">
+          <div class="gal" data-stagger="80" data-live="daily">
             <figure class="rv rv--clip"><img src="assets/img/songdo/songdo-04.jpg" alt="클럽 일상" loading="lazy"></figure>
             <figure class="rv rv--clip"><img src="assets/img/songdo/songdo-07.jpg" alt="클럽 일상" loading="lazy"></figure>
             <figure class="rv rv--clip"><img src="assets/img/songdo/songdo-08.jpg" alt="클럽 일상" loading="lazy"></figure>
@@ -218,7 +218,7 @@
           <div class="split">
             <div class="split__media rv rv--clip"><img src="assets/img/facility/baegot-awards.jpg" alt="대회 수상 기록" loading="lazy"></div>
             <div class="split__body rv" style="--d:120ms">
-              <div class="empty">등록된 대회 기록이 없습니다.</div>
+              <div class="empty" data-live="competitions">등록된 대회 기록이 없습니다.</div>
             </div>
           </div>
         </div>
@@ -227,20 +227,29 @@
     <footer class="ft">
       <div class="wrap ft__inner">
         <a class="ft__brand" href="index.html" aria-label="엔티언펜싱클럽 홈">
-          <span class="hdr__plate"><img src="assets/img/brand/antaean-logo.jpg" alt="ANTAEAN FENCING CLUB 로고"></span>
+          <span class="hdr__plate"><img src="assets/img/brand/antaean-emblem.png" alt="ANTAEAN FENCING CLUB 로고"></span>
           <span>ANTAEAN<br>FENCING CLUB</span>
         </a>
 
         <div class="ft__body">
           <nav class="ft__links" aria-label="약관">
             <a href="privacy.html">개인정보처리방침</a>
-            <a href="admin/login.html">ADMIN</a>
           </nav>
-          <p class="ft__biz">
-            <span>엔티언펜싱클럽</span>
-            <span>대표 연락처 <a href="tel:01028486663" data-live-branch="songdo" data-live-field="phone">010.2848.6663</a></span>
-            <span>배곧점 <a href="tel:01044887866" data-live-branch="baegot" data-live-field="phone">010.4488.7866</a></span>
-          </p>
+          <p class="ft__biz"><span>엔티언펜싱클럽</span></p>
+          <div class="ft__branches">
+            <div class="ft__branch">
+              <strong>송도점</strong>
+              <span><a href="https://map.naver.com/p/search/%EC%9D%B8%EC%B2%9C%20%EC%97%B0%EC%88%98%EA%B5%AC%20%ED%95%B4%EB%8F%8B%EC%9D%B4%EB%A1%9C152%EB%B2%88%EA%B8%B8%209%20%EB%8C%80%ED%99%8D%ED%94%84%EB%9D%BC%EC%9E%90%205%EC%B8%B5%20505%ED%98%B8" target="_blank" rel="noopener" data-live-branch="songdo" data-live-field="address">인천 연수구 해돋이로152번길 9 대홍프라자 5층 505호</a></span>
+              <span>대표 연락처 <a href="tel:01028486663" data-live-branch="songdo" data-live-field="phone">010.2848.6663</a></span>
+              <span>사업자등록번호 276-16-02552</span>
+            </div>
+            <div class="ft__branch">
+              <strong>배곧점</strong>
+              <span><a href="https://map.naver.com/p/search/%EA%B2%BD%EA%B8%B0%EB%8F%84%20%EC%8B%9C%ED%9D%A5%EC%8B%9C%20%EB%B0%B0%EA%B3%A74%EB%A1%9C%2032-9%20%EA%B3%A8%EB%93%A0%ED%94%84%EB%9D%BC%EC%9E%90%205%EC%B8%B5%20503%ED%98%B8" target="_blank" rel="noopener" data-live-branch="baegot" data-live-field="address">경기도 시흥시 배곧4로 32-9 골든프라자 5층 503호</a></span>
+              <span>대표 연락처 <a href="tel:01044887866" data-live-branch="baegot" data-live-field="phone">010.4488.7866</a></span>
+              <span>사업자등록번호 226-19-22554</span>
+            </div>
+          </div>
           <p class="ft__copy">Copyright 엔티언펜싱클럽. All rights reserved.</p>
         </div>
       </div>
@@ -262,10 +271,10 @@
     </nav>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
-    <script src="assets/js/config.js?v=1788283571"></script>
-    <script src="assets/js/db.js?v=1788283571"></script>
-    <script src="assets/js/site.js?v=1788283571"></script>
-    <script src="assets/js/live.js?v=1788283571"></script>
-    <script src="assets/js/blade.js?v=1788283571"></script>
+    <script src="assets/js/config.js?v=1788315203"></script>
+    <script src="assets/js/db.js?v=1788315203"></script>
+    <script src="assets/js/site.js?v=1788315203"></script>
+    <script src="assets/js/live.js?v=1788315203"></script>
+    <script src="assets/js/blade.js?v=1788315203"></script>
   </body>
 </html>

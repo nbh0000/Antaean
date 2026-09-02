@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>클럽 일상 | ANTAEAN 관리자</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" href="../assets/img/brand/antaean-logo.jpg">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+  </head>
+  <body>
+    <div class="a-wrap">
+      <nav class="a-side"></nav>
+      <main class="a-main">
+        <div class="a-head">
+          <h1>클럽 일상</h1>
+          <p>커뮤니티 페이지의 클럽 일상 사진입니다. 사진을 올리면 바로 홈페이지에 표시됩니다.</p>
+        </div>
+        <div class="card">
+          <div class="field">
+            <label for="up">사진 올리기</label>
+            <input id="up" type="file" accept="image/*" multiple>
+            <div class="hint">여러 장을 한 번에 고를 수 있습니다. 가로 1600px로 자동으로 줄여 저장합니다.</div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>등록된 사진</h2>
+          <p class="hint">숫자가 작을수록 앞에 나옵니다. 숫자를 바꾸면 자동으로 저장됩니다. 한 장이라도 올리면 홈페이지에 들어 있던 기본 사진 대신 여기 올린 사진만 표시됩니다.</p>
+          <div class="gal-grid" id="grid"></div>
+        </div>
+      </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/db.js"></script>
+    <script src="../assets/js/admin.js"></script>
+    <script>
+      (async function () {
+        if (!(await Admin.guard("daily"))) return;
+        async function load() {
+          var list = await AF.list("daily_photos", function (q) { return q.order("sort"); });
+          var g = document.getElementById("grid");
+          if (!list.length) { g.innerHTML = '<div class="empty">등록된 사진이 없습니다.</div>'; return; }
+          g.innerHTML = list.map(function (r) {
+            return '<div class="gal-item" data-g="' + r.id + '"><img src="' + r.image_url + '" alt="">' +
+              '<div class="bar"><input type="text" inputmode="numeric" value="' + (r.sort || 0) + '" data-sort="' + r.id + '">' +
+              '<button class="btn btn-danger btn-sm" data-del="' + r.id + '">삭제</button></div></div>';
+          }).join("");
+          window._daily = list;
+        }
+        document.addEventListener("click", async function (e) {
+          var d = e.target.closest("[data-del]");
+          if (d) {
+            var r = window._daily.filter(function (x) { return x.id === d.dataset.del; })[0];
+            if (await Admin.remove("daily_photos", d.dataset.del, "이 사진")) { AF.removeImage(r.image_url); load(); }
+          }
+        });
+        document.addEventListener("change", async function (e) {
+          var s = e.target.closest("[data-sort]");
+          if (s) { await Admin.save("daily_photos", { id: s.dataset.sort, sort: parseInt(s.value, 10) || 0 }, { message: "순서를 바꿨습니다." }); load(); }
+        });
+        document.getElementById("up").addEventListener("change", async function (e) {
+          var files = Array.prototype.slice.call(e.target.files); if (!files.length) return;
+          Admin.toast(files.length + "장을 올리는 중입니다…");
+          try {
+            for (var i = 0; i < files.length; i++) {
+              var url = await AF.upload("daily", files[i]);
+              await Admin.save("daily_photos", { image_url: url, sort: 90 + i }, { message: "" });
+            }
+            Admin.toast("사진을 올렸습니다."); e.target.value = ""; load();
+          } catch (ex) { Admin.toast("사진을 올리지 못했습니다.", true); }
+        });
+        load();
+      })();
+    </script>
+  </body>
+</html>

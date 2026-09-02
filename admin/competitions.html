@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>대회 기록 | ANTAEAN 관리자</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" href="../assets/img/brand/antaean-logo.jpg">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+  </head>
+  <body>
+    <div class="a-wrap">
+      <nav class="a-side"></nav>
+      <main class="a-main">
+        <div class="a-head">
+          <h1>대회 기록</h1>
+          <p>커뮤니티 페이지의 대회 기록에 표시됩니다. 대회 이름과 성적을 적어 주세요.</p>
+        </div>
+        <div class="card">
+          <h2 id="form-title">기록 추가</h2>
+          <p class="hint">제목만 넣어도 등록됩니다. 제목에 대회 이름, 내용에 참가자와 성적을 적으세요.</p>
+          <form id="f">
+            <input type="hidden" id="id">
+            <div class="row">
+              <div class="field"><label for="title">제목</label><input id="title" type="text" required></div>
+              <div class="field"><label for="sort">표시 순서</label><input id="sort" type="text" inputmode="numeric" value="0">
+                <div class="hint">숫자가 작을수록 앞에 나옵니다.</div></div>
+            </div>
+            <div class="field"><label for="body">내용</label><textarea id="body"></textarea>
+              <div class="hint">줄바꿈은 그대로 표시됩니다.</div></div>
+            <div class="actions">
+              <button class="btn btn-primary" type="submit" id="go">등록</button>
+              <button class="btn btn-line" type="button" id="reset" hidden>새로 작성</button>
+            </div>
+          </form>
+        </div>
+        <div class="card">
+          <h2>등록된 기록</h2>
+          <table><thead><tr><th>순서</th><th>제목</th><th></th></tr></thead>
+          <tbody id="rows"><tr><td colspan="3" class="empty">불러오는 중…</td></tr></tbody></table>
+        </div>
+      </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/db.js"></script>
+    <script src="../assets/js/admin.js"></script>
+    <script>
+      (async function () {
+        if (!(await Admin.guard("competitions"))) return;
+        var f = document.getElementById("f"), rows = document.getElementById("rows");
+
+        function reset() {
+          f.reset(); document.getElementById("id").value = "";
+          document.getElementById("sort").value = "0";
+          document.getElementById("form-title").textContent = "기록 추가";
+          document.getElementById("go").textContent = "등록";
+          document.getElementById("reset").hidden = true;
+        }
+        document.getElementById("reset").addEventListener("click", reset);
+
+        f.addEventListener("submit", async function (e) {
+          e.preventDefault();
+          var row = {
+            title: document.getElementById("title").value.trim(),
+            body: document.getElementById("body").value,
+            sort: parseInt(document.getElementById("sort").value, 10) || 0
+          };
+          if (!row.title) { document.getElementById("title").focus(); return; }
+          var id = document.getElementById("id").value;
+          if (id) row.id = id;
+          await Admin.save("competitions", row);
+          reset(); load();
+        });
+
+        async function load() {
+          var list = await AF.list("competitions", function (q) { return q.order("sort"); });
+          if (!list.length) { rows.innerHTML = '<tr><td colspan="3" class="empty">등록된 기록이 없습니다.</td></tr>'; return; }
+          rows.innerHTML = list.map(function (r) {
+            return '<tr><td style="width:60px">' + (r.sort || 0) + "</td>" +
+              "<td><b>" + AF.esc(r.title) + "</b><br>" +
+              '<span style="color:#5b6472;font-size:13px">' + AF.esc((r.body || "").slice(0, 80)) + "</span></td>" +
+              '<td class="rt"><button class="btn btn-line btn-sm" data-edit="' + r.id + '">수정</button> ' +
+              '<button class="btn btn-danger btn-sm" data-del="' + r.id + '">삭제</button></td></tr>';
+          }).join("");
+          window._comps = list;
+        }
+        document.addEventListener("click", async function (e) {
+          var ed = e.target.closest("[data-edit]");
+          if (ed) {
+            var r = window._comps.filter(function (x) { return x.id === ed.dataset.edit; })[0];
+            if (!r) return;
+            document.getElementById("id").value = r.id;
+            document.getElementById("title").value = r.title || "";
+            document.getElementById("body").value = r.body || "";
+            document.getElementById("sort").value = r.sort || 0;
+            document.getElementById("form-title").textContent = "기록 수정";
+            document.getElementById("go").textContent = "수정 저장";
+            document.getElementById("reset").hidden = false;
+            f.scrollIntoView({ behavior: "smooth", block: "center" });
+            return;
+          }
+          var dl = e.target.closest("[data-del]");
+          if (dl && await Admin.remove("competitions", dl.dataset.del, "이 기록")) load();
+        });
+        load();
+      })();
+    </script>
+  </body>
+</html>
