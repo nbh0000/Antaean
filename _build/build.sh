@@ -43,7 +43,7 @@ ${head_links}
   <body data-page="${key}">
 HTML
     sed "s|{{HDR_SOLID}}|${solid}|g" _build/header.html
-    cat "_build/${body}"
+    sed -e "s|{{KAKAO_URL}}|${KAKAO_URL}|g" -e "s|{{VER}}|${VER}|g" "_build/${body}"
     sed -e "s|{{KAKAO_URL}}|${KAKAO_URL}|g" -e "s|{{VER}}|${VER}|g" _build/footer.html
     cat <<'HTML'
   </body>
