@@ -12,10 +12,47 @@
   var esc = AF.esc;
 
   /* ---------- 공지 ---------- */
+  function noticeHref(id) {
+    return "community.html?notice=" + encodeURIComponent(id) + "#community-notice";
+  }
+
+  function noticeBody(text) {
+    return esc(text || "").split("\r").join("").split("\n").join("<br>");
+  }
+
+  async function noticeDetail(box, id) {
+    var rows = await AF.list("notices", function (q) { return q.eq("id", id).limit(1); });
+    if (!rows.length) return false;
+    var n = rows[0];
+    box.classList.remove("empty");
+    box.innerHTML =
+      '<article class="notice-view">' +
+        '<h3 class="notice-view__title">' +
+          (n.pinned ? '<span class="tag">공지</span>' : "") + esc(n.title) +
+        "</h3>" +
+        '<p class="notice-view__date">' + AF.fmtDate(n.created_at) + "</p>" +
+        (n.image_url
+          ? '<img class="notice-view__img" src="' + esc(n.image_url) + '" alt="" loading="lazy">'
+          : "") +
+        '<div class="notice-view__body">' + noticeBody(n.body) + "</div>" +
+        '<p class="notice-view__foot">' +
+          '<a class="btn btn--line" href="community.html#community-notice">목록</a>' +
+        "</p>" +
+      "</article>";
+    return true;
+  }
+
   async function notices() {
     var box = document.querySelector("[data-live=notices]");
     if (!box) return;
     var limit = parseInt(box.dataset.limit, 10) || 0;
+
+    /* 상세 보기: community.html?notice=<id> */
+    var wanted = new URLSearchParams(location.search).get("notice");
+    if (wanted && !limit) {
+      if (await noticeDetail(box, wanted)) return;
+    }
+
     var rows = await AF.list("notices", function (q) {
       q = q.order("pinned", { ascending: false }).order("created_at", { ascending: false });
       return limit ? q.limit(limit) : q;
@@ -24,7 +61,7 @@
     box.classList.remove("empty");
     box.innerHTML =
       '<ul class="notice-list">' + rows.map(function (n) {
-        return "<li><a href=\"community.html#community-notice\">" +
+        return '<li><a href="' + esc(noticeHref(n.id)) + '">' +
           (n.pinned ? '<span class="tag">공지</span>' : "") +
           '<span class="t">' + esc(n.title) + "</span>" +
           '<span class="d">' + AF.fmtDate(n.created_at) + "</span></a></li>";
@@ -139,6 +176,34 @@
     });
   }
 
+  /* ---------- 커뮤니티 > 클럽 일상 ----------
+     사진이 한 장이라도 등록되어 있으면 HTML 에 들어 있던 기본 사진을
+     전부 걷어내고 등록된 사진만 보여 준다. 없으면 원본 그대로 둔다. */
+  async function daily() {
+    var box = document.querySelector("[data-live=daily]");
+    if (!box) return;
+    var rows = await AF.list("daily_photos", function (q) { return q.order("sort"); });
+    if (!rows.length) return;
+    box.innerHTML = rows.map(function (r) {
+      return '<figure class="rv rv--clip is-in"><img src="' + esc(r.image_url) + '" alt="' +
+        esc(r.caption || "클럽 일상") + '" loading="lazy"></figure>';
+    }).join("");
+  }
+
+  /* ---------- 커뮤니티 > 대회 기록 ---------- */
+  async function competitions() {
+    var box = document.querySelector("[data-live=competitions]");
+    if (!box) return;
+    var rows = await AF.list("competitions", function (q) { return q.order("sort"); });
+    if (!rows.length) return;
+    box.classList.remove("empty");
+    box.innerHTML =
+      '<ul class="rec-list">' + rows.map(function (r) {
+        return "<li><strong>" + esc(r.title) + "</strong>" +
+          (r.body ? "<p>" + noticeBody(r.body) + "</p>" : "") + "</li>";
+      }).join("") + "</ul>";
+  }
+
   /* ---------- 지점 정보 ---------- */
   async function branches() {
     var slots = document.querySelectorAll("[data-live-branch]");
@@ -185,6 +250,7 @@
     }
   }
 
-  Promise.all([notices(), schedules(), gallery(), coaches(), athletes(), branches()])
+  Promise.all([notices(), schedules(), gallery(), coaches(), athletes(), branches(),
+               daily(), competitions()])
     .catch(function (e) { console.warn("[live]", e); });
 })();

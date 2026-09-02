@@ -28,11 +28,11 @@ cp -r admin "$DIST"/
 mkdir -p "$DIST/assets"
 cp -r assets/css assets/js assets/img "$DIST/assets"/
 
-#    참조되지 않는 4K 원본은 제외 (7.7MB)
-rm -f "$DIST"/assets/img/hero/fencing-master-*.jpg
+#    페이지에서 참조하지 않는 초고해상도 원본은 제외한다
+rm -f "$DIST"/assets/img/hero/*-master-*.jpg
 
 # 4) 배포 설정
-cp _headers netlify.toml robots.txt "$DIST"/ 2>/dev/null || true
+cp _headers robots.txt "$DIST"/ 2>/dev/null || true
 
 echo "── dist/ 준비 완료 ──"
 echo "  페이지   : $(ls "$DIST"/*.html | wc -l)개"
