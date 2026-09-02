@@ -168,3 +168,12 @@ td.rt { text-align: right; white-space: nowrap; }
 .time-pair { display: flex; align-items: center; gap: 6px; }
 .time-pair input { width: 100%; min-width: 68px; padding: 8px 6px; text-align: center; }
 .time-pair span { color: var(--soft); flex: 0 0 auto; }
+
+/* 시각 선택 드롭다운 (시 : 분  ~  시 : 분) */
+.time-pair { flex-wrap: nowrap; gap: 3px; }
+.time-pair select {
+  padding: 8px 4px; min-width: 56px;
+  text-align: center; text-align-last: center;
+}
+.time-pair .colon { color: var(--soft); padding: 0 1px; }
+.time-pair .tilde { color: var(--soft); padding: 0 5px; }

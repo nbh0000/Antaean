@@ -25,17 +25,19 @@
           </div>
           <p class="hint" style="margin:0 0 12px">
             요일과 반은 여러 개를 함께 고를 수 있습니다.
-            (예: 월·수·금 16:00~17:00 에 취미반 + 꿈나무반)
+            (예: 월·수·금 16:00~17:00 에 취미반 + 꿈나무반)<br>
+            시작 시각을 고르면 종료 시각이 1시간 뒤로 자동으로 채워집니다. 다르면 바꾸시면 됩니다.<br>
+            같은 시간에 요일만 다른 줄은 <b>복사</b>를 눌러 만드시면 빠릅니다.
           </p>
           <div style="overflow-x:auto">
             <table>
               <thead><tr>
                 <th style="min-width:210px">요일</th>
-                <th style="min-width:170px">시간</th>
+                <th style="min-width:230px">시간</th>
                 <th style="min-width:230px">반</th>
                 <th style="min-width:140px">비고</th>
                 <th style="width:72px">순서</th>
-                <th style="width:70px"></th>
+                <th style="width:132px"></th>
               </tr></thead>
               <tbody id="rows"></tbody>
             </table>
@@ -54,6 +56,10 @@
       (async function () {
         if (!(await Admin.guard("schedules"))) return;
         var DAYS = ["월", "화", "수", "목", "금", "토", "일"];
+        var MINS = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
+        var HOURS = [];
+        for (var h = 6; h <= 23; h++) HOURS.push((h < 10 ? "0" : "") + h);
+
         var branch = "songdo", progs = [], rows = [];
         progs = await AF.list("programs", function (q) { return q.order("sort"); });
 
@@ -65,6 +71,21 @@
             return '<label class="chip"><input type="checkbox" data-' + key + '="' + AF.esc(v) + '"' +
               (on ? " checked" : "") + "> " + AF.esc(t) + "</label>";
           }).join("") + "</div>";
+        }
+
+        /* 시각은 시/분 드롭다운으로 고른다. 직접 타이핑하는 것보다 실수가 적다. */
+        function timeSel(key, part, list, cur) {
+          return '<select data-time="' + key + '" data-part="' + part + '">' +
+            '<option value=""></option>' +
+            list.map(function (v) {
+              return '<option value="' + v + '"' + (v === cur ? " selected" : "") + ">" + v + "</option>";
+            }).join("") + "</select>";
+        }
+
+        function timeCell(key, val) {
+          var hh = val ? String(val).slice(0, 2) : "";
+          var mm = val ? String(val).slice(3, 5) : "";
+          return timeSel(key, "h", HOURS, hh) + '<span class="colon">:</span>' + timeSel(key, "m", MINS, mm);
         }
 
         function draw() {
@@ -81,14 +102,17 @@
             return '<tr data-i="' + i + '">' +
               "<td>" + chips("days", DAYS, r.days || [], "day") + "</td>" +
               '<td><div class="time-pair">' +
-                '<input data-k="start_time" type="time" step="60" value="' + AF.esc(r.start_time || "") + '">' +
-                "<span>~</span>" +
-                '<input data-k="end_time" type="time" step="60" value="' + AF.esc(r.end_time || "") + '">' +
+                timeCell("start_time", r.start_time) +
+                '<span class="tilde">~</span>' +
+                timeCell("end_time", r.end_time) +
               "</div></td>" +
               "<td>" + chips("progs", progs.map(function (p) { return { v: p.id, t: p.name }; }), r.program_ids || [], "prog") + "</td>" +
               '<td><input data-k="note" type="text" value="' + AF.esc(r.note || "") + '"></td>' +
               '<td><input data-k="sort" type="text" inputmode="numeric" value="' + (r.sort || 0) + '"></td>' +
-              '<td class="rt"><button class="btn btn-danger btn-sm" data-del="' + i + '">삭제</button></td></tr>';
+              '<td class="rt">' +
+                '<button class="btn btn-line btn-sm" data-copy="' + i + '">복사</button> ' +
+                '<button class="btn btn-danger btn-sm" data-del="' + i + '">삭제</button>' +
+              "</td></tr>";
           }).join("");
         }
 
@@ -99,6 +123,13 @@
           draw();
         }
 
+        function readTime(tr, key) {
+          var h = tr.querySelector('[data-time="' + key + '"][data-part="h"]');
+          var m = tr.querySelector('[data-time="' + key + '"][data-part="m"]');
+          if (!h || !h.value) return "";
+          return h.value + ":" + (m && m.value ? m.value : "00");
+        }
+
         function collect() {
           document.querySelectorAll("#rows tr[data-i]").forEach(function (tr) {
             var r = rows[+tr.dataset.i];
@@ -106,12 +137,31 @@
             tr.querySelectorAll("[data-k]").forEach(function (el) {
               r[el.dataset.k] = el.dataset.k === "sort" ? (parseInt(el.value, 10) || 0) : el.value;
             });
+            r.start_time = readTime(tr, "start_time");
+            r.end_time = readTime(tr, "end_time");
             r.days = Array.prototype.map.call(
               tr.querySelectorAll("[data-day]:checked"), function (el) { return el.dataset.day; });
             r.program_ids = Array.prototype.map.call(
               tr.querySelectorAll("[data-prog]:checked"), function (el) { return el.dataset.prog; });
           });
         }
+
+        /* 시작 시각을 고르면 종료 시각이 비어 있을 때만 1시간 뒤로 채워 준다. */
+        document.addEventListener("change", function (e) {
+          var sel = e.target.closest('[data-time="start_time"]');
+          if (!sel) return;
+          var tr = e.target.closest("tr");
+          if (!tr) return;
+          var eh = tr.querySelector('[data-time="end_time"][data-part="h"]');
+          var em = tr.querySelector('[data-time="end_time"][data-part="m"]');
+          if (!eh || eh.value) return;
+          var sh = tr.querySelector('[data-time="start_time"][data-part="h"]');
+          var sm = tr.querySelector('[data-time="start_time"][data-part="m"]');
+          if (!sh.value) return;
+          var n = parseInt(sh.value, 10) + 1;
+          if (n <= 23) eh.value = (n < 10 ? "0" : "") + n;
+          if (em) em.value = sm.value || "00";
+        });
 
         document.addEventListener("click", async function (e) {
           var b = e.target.closest("[data-b]");
@@ -124,6 +174,24 @@
               start_time: "", end_time: "", note: "", sort: rows.length
             });
             draw();
+            return;
+          }
+
+          var c = e.target.closest("[data-copy]");
+          if (c) {
+            collect();
+            var ci = +c.dataset.copy, src = rows[ci];
+            rows.splice(ci + 1, 0, {
+              branch_id: branch,
+              days: (src.days || []).slice(),
+              program_ids: (src.program_ids || []).slice(),
+              start_time: src.start_time || "",
+              end_time: src.end_time || "",
+              note: src.note || "",
+              sort: (src.sort || 0) + 1
+            });
+            draw();
+            Admin.toast("줄을 복사했습니다. 바뀐 부분만 고치고 저장하세요.");
             return;
           }
 
