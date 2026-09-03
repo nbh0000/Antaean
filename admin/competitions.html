@@ -30,7 +30,7 @@
               <div class="hint">줄바꿈은 그대로 표시됩니다.</div></div>
             <div class="actions">
               <button class="btn btn-primary" type="submit" id="go">등록</button>
-              <button class="btn btn-line" type="button" id="reset" hidden>새로 작성</button>
+              <button class="btn btn-line" type="button" id="resetBtn" hidden>새로 작성</button>
             </div>
           </form>
         </div>
@@ -55,9 +55,9 @@
           document.getElementById("sort").value = "0";
           document.getElementById("form-title").textContent = "기록 추가";
           document.getElementById("go").textContent = "등록";
-          document.getElementById("reset").hidden = true;
+          document.getElementById("resetBtn").hidden = true;
         }
-        document.getElementById("reset").addEventListener("click", reset);
+        document.getElementById("resetBtn").addEventListener("click", reset);
 
         f.addEventListener("submit", async function (e) {
           e.preventDefault();
@@ -96,7 +96,7 @@
             document.getElementById("sort").value = r.sort || 0;
             document.getElementById("form-title").textContent = "기록 수정";
             document.getElementById("go").textContent = "수정 저장";
-            document.getElementById("reset").hidden = false;
+            document.getElementById("resetBtn").hidden = false;
             f.scrollIntoView({ behavior: "smooth", block: "center" });
             return;
           }
