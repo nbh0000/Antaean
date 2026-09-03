@@ -169,11 +169,10 @@ td.rt { text-align: right; white-space: nowrap; }
 .time-pair input { width: 100%; min-width: 68px; padding: 8px 6px; text-align: center; }
 .time-pair span { color: var(--soft); flex: 0 0 auto; }
 
-/* 시각 선택 드롭다운 (시 : 분  ~  시 : 분) */
-.time-pair { flex-wrap: nowrap; gap: 3px; }
-.time-pair select {
-  padding: 8px 4px; min-width: 56px;
-  text-align: center; text-align-last: center;
+/* 시각 입력 (직접 입력 + 목록 선택) */
+.time-pair { flex-wrap: nowrap; gap: 6px; }
+.time-pair .time-in {
+  width: 84px; min-width: 84px; padding: 8px 6px;
+  text-align: center; font-variant-numeric: tabular-nums;
 }
-.time-pair .colon { color: var(--soft); padding: 0 1px; }
-.time-pair .tilde { color: var(--soft); padding: 0 5px; }
+.time-pair .tilde { color: var(--soft); padding: 0 2px; }

@@ -26,7 +26,8 @@
           <p class="hint" style="margin:0 0 12px">
             요일과 반은 여러 개를 함께 고를 수 있습니다.
             (예: 월·수·금 16:00~17:00 에 취미반 + 꿈나무반)<br>
-            시작 시각을 고르면 종료 시각이 1시간 뒤로 자동으로 채워집니다. 다르면 바꾸시면 됩니다.<br>
+            시각은 직접 입력해도 되고 칸을 누르면 나오는 목록에서 골라도 됩니다. '1630' 처럼 숫자만 쳐도 16:30 으로 맞춰집니다.<br>
+            시작 시각을 넣으면 종료 시각이 1시간 뒤로 자동으로 채워집니다. 다르면 바꾸시면 됩니다.<br>
             같은 시간에 요일만 다른 줄은 <b>복사</b>를 눌러 만드시면 빠릅니다.
           </p>
           <div style="overflow-x:auto">
@@ -62,6 +63,7 @@
 
         var branch = "songdo", progs = [], rows = [];
         progs = await AF.list("programs", function (q) { return q.order("sort"); });
+        buildTimeList();
 
         function chips(name, list, chosen, key) {
           return '<div class="chips">' + list.map(function (o) {
@@ -73,19 +75,37 @@
           }).join("") + "</div>";
         }
 
-        /* 시각은 시/분 드롭다운으로 고른다. 직접 타이핑하는 것보다 실수가 적다. */
-        function timeSel(key, part, list, cur) {
-          return '<select data-time="' + key + '" data-part="' + part + '">' +
-            '<option value=""></option>' +
-            list.map(function (v) {
-              return '<option value="' + v + '"' + (v === cur ? " selected" : "") + ">" + v + "</option>";
-            }).join("") + "</select>";
+        /* 시각은 직접 입력해도 되고, 칸을 누르면 나오는 목록에서 골라도 된다.
+           '1630' 처럼 숫자만 쳐도 16:30 으로 알아서 맞춰 준다. */
+        function buildTimeList() {
+          if (document.getElementById("af-times")) return;
+          var dl = document.createElement("datalist");
+          dl.id = "af-times";
+          var out = [];
+          for (var h = 6; h <= 22; h++) {
+            for (var i = 0; i < MINS.length; i += 3) {   /* 15분 간격 */
+              out.push('<option value="' + (h < 10 ? "0" : "") + h + ":" + MINS[i] + '">');
+            }
+          }
+          dl.innerHTML = out.join("");
+          document.body.appendChild(dl);
+        }
+
+        function normTime(v) {
+          var d = String(v == null ? "" : v).replace(/[^0-9]/g, "");
+          if (!d) return "";
+          var h, m;
+          if (d.length <= 2) { h = parseInt(d, 10); m = 0; }
+          else if (d.length === 3) { h = parseInt(d.slice(0, 1), 10); m = parseInt(d.slice(1), 10); }
+          else { h = parseInt(d.slice(0, 2), 10); m = parseInt(d.slice(2, 4), 10); }
+          if (isNaN(h) || h > 23) h = 23;
+          if (isNaN(m) || m > 59) m = 59;
+          return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
         }
 
         function timeCell(key, val) {
-          var hh = val ? String(val).slice(0, 2) : "";
-          var mm = val ? String(val).slice(3, 5) : "";
-          return timeSel(key, "h", HOURS, hh) + '<span class="colon">:</span>' + timeSel(key, "m", MINS, mm);
+          return '<input class="time-in" data-time="' + key + '" list="af-times" type="text" ' +
+            'inputmode="numeric" maxlength="5" placeholder="00:00" value="' + AF.esc(val || "") + '">';
         }
 
         function draw() {
@@ -124,10 +144,8 @@
         }
 
         function readTime(tr, key) {
-          var h = tr.querySelector('[data-time="' + key + '"][data-part="h"]');
-          var m = tr.querySelector('[data-time="' + key + '"][data-part="m"]');
-          if (!h || !h.value) return "";
-          return h.value + ":" + (m && m.value ? m.value : "00");
+          var el = tr.querySelector('[data-time="' + key + '"]');
+          return el ? normTime(el.value) : "";
         }
 
         function collect() {
@@ -146,21 +164,18 @@
           });
         }
 
-        /* 시작 시각을 고르면 종료 시각이 비어 있을 때만 1시간 뒤로 채워 준다. */
+        /* 입력칸을 벗어나면 '1630' 같은 값을 16:30 으로 다듬는다.
+           시작 시각을 넣었는데 종료가 비어 있으면 1시간 뒤로 채워 준다. */
         document.addEventListener("change", function (e) {
-          var sel = e.target.closest('[data-time="start_time"]');
-          if (!sel) return;
-          var tr = e.target.closest("tr");
-          if (!tr) return;
-          var eh = tr.querySelector('[data-time="end_time"][data-part="h"]');
-          var em = tr.querySelector('[data-time="end_time"][data-part="m"]');
-          if (!eh || eh.value) return;
-          var sh = tr.querySelector('[data-time="start_time"][data-part="h"]');
-          var sm = tr.querySelector('[data-time="start_time"][data-part="m"]');
-          if (!sh.value) return;
-          var n = parseInt(sh.value, 10) + 1;
-          if (n <= 23) eh.value = (n < 10 ? "0" : "") + n;
-          if (em) em.value = sm.value || "00";
+          var el = e.target.closest(".time-in");
+          if (!el) return;
+          el.value = normTime(el.value);
+          if (el.dataset.time !== "start_time" || !el.value) return;
+          var tr = el.closest("tr");
+          var end = tr && tr.querySelector('[data-time="end_time"]');
+          if (!end || end.value) return;
+          var n = parseInt(el.value.slice(0, 2), 10) + 1;
+          if (n <= 23) end.value = (n < 10 ? "0" : "") + n + ":" + el.value.slice(3, 5);
         });
 
         document.addEventListener("click", async function (e) {
