@@ -103,6 +103,41 @@
     }
   }
 
+  /* ---------- 프로그램 ----------
+     관리자에서 고친 반 이름·대상·수업특징·수업시간을 프로그램 페이지와
+     메인 카드에 반영한다. 값이 비어 있으면 HTML 원본을 그대로 둔다. */
+  var PROG_FIELDS = ["name", "target", "features", "class_time"];
+
+  async function programs() {
+    var slots = document.querySelectorAll("[data-live-program]");
+    if (!slots.length) return;
+    var rows = await AF.list("programs");
+    if (!rows.length) return;
+    var byId = {};
+    rows.forEach(function (r) { byId[r.id] = r; });
+
+    slots.forEach(function (card) {
+      var p = byId[card.dataset.liveProgram];
+      if (!p) return;
+      PROG_FIELDS.forEach(function (f) {
+        var el = card.querySelector('[data-prog-field="' + f + '"]');
+        if (!el) return;
+        var v = p[f];
+        var block = el.closest("[data-prog-block]");
+        if (!v) { if (block) block.hidden = true; return; }
+        if (block) block.hidden = false;
+        if (f === "name" || el.tagName === "P" || el.tagName === "H2" || el.tagName === "H3") {
+          el.textContent = v;
+        } else {
+          /* 줄바꿈으로 구분된 여러 문단 */
+          el.innerHTML = AF.lines(v).map(function (line) {
+            return "<p>" + esc(line) + "</p>";
+          }).join("");
+        }
+      });
+    });
+  }
+
   /* ---------- 갤러리 ---------- */
   async function gallery() {
     var boxes = document.querySelectorAll("[data-live=gallery]");
@@ -120,19 +155,48 @@
     }
   }
 
-  /* ---------- 지도자 사진 ----------
-     이름이 같은 지도자에 사진이 등록돼 있으면 이니셜을 사진으로 바꾼다. */
+  /* ---------- 지도자 ----------
+     관리자에 등록된 지도자가 있으면 이름으로 짝을 지어 사진과 각 항목을
+     모두 관리자 값으로 바꾼다. 항목이 비어 있으면 그 블록을 감춘다.
+     DB 에 없는 지도자는 HTML 원본 그대로 둔다. */
+  var COACH_FIELDS = ["education", "career", "certificates", "coaching", "awards"];
+
   async function coaches() {
-    var slots = document.querySelectorAll("[data-live=coach-photo]");
-    if (!slots.length) return;
+    var photos = document.querySelectorAll("[data-live=coach-photo]");
+    var cards = document.querySelectorAll("[data-live-coach]");
+    if (!photos.length && !cards.length) return;
     var rows = await AF.list("coaches");
     if (!rows.length) return;
     var byName = {};
     rows.forEach(function (c) { byName[c.name] = c; });
-    slots.forEach(function (el) {
+
+    photos.forEach(function (el) {
       var c = byName[el.dataset.name];
       if (!c || !c.photo_url) return;
       el.innerHTML = '<img src="' + esc(c.photo_url) + '" alt="' + esc(c.name) + '">';
+    });
+
+    cards.forEach(function (card) {
+      var c = byName[card.dataset.liveCoach];
+      if (!c) return;
+
+      var nameEl = card.querySelector('[data-coach-field="name"]');
+      if (nameEl && c.name) nameEl.textContent = c.name;
+      var titleEl = card.querySelector('[data-coach-field="title"]');
+      if (titleEl) {
+        if (c.title) { titleEl.textContent = c.title; titleEl.hidden = false; }
+        else { titleEl.hidden = true; }
+      }
+
+      COACH_FIELDS.forEach(function (f) {
+        var ul = card.querySelector('[data-coach-field="' + f + '"]');
+        if (!ul) return;
+        var block = ul.closest("[data-coach-block]");
+        var lines = AF.lines(c[f]);
+        if (!lines.length) { if (block) block.hidden = true; return; }
+        if (block) block.hidden = false;
+        ul.innerHTML = lines.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("");
+      });
     });
   }
 
@@ -251,6 +315,6 @@
   }
 
   Promise.all([notices(), schedules(), gallery(), coaches(), athletes(), branches(),
-               daily(), competitions()])
+               daily(), competitions(), programs()])
     .catch(function (e) { console.warn("[live]", e); });
 })();
