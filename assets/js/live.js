@@ -170,14 +170,20 @@
     var byName = {};
     rows.forEach(function (c) { byName[c.name] = c; });
 
-    photos.forEach(function (el) {
-      var c = byName[el.dataset.name];
+    /* 관리자에서 이름을 바꾸면 이름으로는 짝이 안 맞는다.
+       그럴 때를 대비해 표시 순서대로도 짝지을 수 있게 해 둔다. */
+    var ordered = rows.slice().sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
+    var cardList = Array.prototype.slice.call(cards);
+    function pick(key, idx) { return byName[key] || ordered[idx] || null; }
+
+    photos.forEach(function (el, idx) {
+      var c = pick(el.dataset.name, idx);
       if (!c || !c.photo_url) return;
       el.innerHTML = '<img src="' + esc(c.photo_url) + '" alt="' + esc(c.name) + '">';
     });
 
-    cards.forEach(function (card) {
-      var c = byName[card.dataset.liveCoach];
+    cardList.forEach(function (card, idx) {
+      var c = pick(card.dataset.liveCoach, idx);
       if (!c) return;
 
       var nameEl = card.querySelector('[data-coach-field="name"]');
