@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 SITE="https://antaean.kr"   # 공개 도메인 (canonical·og:url·sitemap 에 쓰인다)
-KAKAO_URL="#"   # TODO: 카카오톡 채널 URL 확정되면 교체
+KAKAO_URL="https://open.kakao.com/o/sIVmZ9Li"   # 관리자 > 지점 정보에 값이 있으면 그것으로 덮어써진다
 VER="$(date +%s)" # asset cache-buster
 
 build() {            # build <out.html> <body-fragment> <page-key> <title> <hero|solid>

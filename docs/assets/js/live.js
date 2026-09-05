@@ -345,6 +345,20 @@
       if (!b) return;
       var f = el.dataset.liveField;
       var v = b[f];
+      /* 카카오톡 오픈채팅 주소는 지점마다 다르다.
+         관리자에 주소가 없는 지점은 버튼을 감춘다. */
+      if (f === "kakao_url") {
+        if (v) {
+          el.href = v;
+          el.target = "_blank";
+          el.rel = "noopener";
+          el.removeAttribute("aria-disabled");
+          el.hidden = false;
+        } else {
+          el.hidden = true;
+        }
+        return;
+      }
       if (!v) return;
       if (f === "phone") {
         el.textContent = v;
