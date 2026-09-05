@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>선수단 | ANTAEAN 관리자</title>
+    <title>Team Antaean | ANTAEAN 관리자</title>
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" href="../assets/img/brand/antaean-emblem.png">
     <link rel="stylesheet" href="../assets/css/admin.css">
@@ -13,8 +13,8 @@
       <nav class="a-side"></nav>
       <main class="a-main">
         <div class="a-head">
-          <h1>선수단</h1>
-          <p>홈페이지 선수단 페이지에 표시됩니다. 학년과 성별로 나뉘어 자동으로 정렬됩니다.</p>
+          <h1>Team Antaean</h1>
+          <p>홈페이지 Team Antaean 페이지에 표시됩니다. 학년과 성별로 나뉘어 자동으로 정렬됩니다.</p>
         </div>
         <div class="card">
           <h2 id="form-title">선수 추가</h2>
@@ -62,24 +62,34 @@
         var GENDERS = [["male", "남자 선수"], ["female", "여자 선수"]];
 
         var f = document.getElementById("f"), box = document.getElementById("list");
-        var photoUrl = null, rows = [];
+        var photoUrl = null, uploading = null, rows = [];
 
         var setPreview = function (url) {
           document.getElementById("preview").innerHTML =
             url ? '<img class="thumb" style="width:80px;height:104px" src="' + url + '">' : "";
         };
 
-        document.getElementById("img").addEventListener("change", async function (e) {
+        /* 사진은 고르는 즉시 올린다. 업로드가 끝나기 전에 저장을 누르면
+           사진 없이 저장되던 문제가 있어, 진행 중인 업로드를 붙잡아 두고
+           저장할 때 그것이 끝날 때까지 기다린다. */
+        document.getElementById("img").addEventListener("change", function (e) {
           var file = e.target.files[0];
           if (!file) return;
           Admin.toast("사진을 올리는 중입니다…");
-          try {
-            photoUrl = await AF.upload("athletes", file);
-            setPreview(photoUrl);
-            Admin.toast("사진을 올렸습니다.");
-          } catch (ex) {
-            Admin.toast("사진을 올리지 못했습니다.", true);
-          }
+          uploading = (async function () {
+            try {
+              var url = await AF.upload("athletes", file);
+              photoUrl = url;
+              setPreview(url);
+              Admin.toast("사진을 올렸습니다.");
+              return url;
+            } catch (ex) {
+              Admin.toast("사진을 올리지 못했습니다.", true);
+              return null;
+            } finally {
+              uploading = null;
+            }
+          })();
         });
 
         function reset() {
@@ -96,6 +106,12 @@
 
         f.addEventListener("submit", async function (e) {
           e.preventDefault();
+          var go = document.getElementById("go");
+          if (go.disabled) return;
+          if (uploading) {
+            Admin.toast("사진을 올리는 중입니다. 끝나면 저장합니다…");
+            await uploading;
+          }
           var row = {
             name: document.getElementById("name").value.trim(),
             grade: document.getElementById("grade").value,
@@ -108,9 +124,14 @@
           if (photoUrl) row.photo_url = photoUrl;
           var id = document.getElementById("id").value;
           if (id) row.id = id;
-          await Admin.save("athletes", row);
-          reset();
-          load();
+          go.disabled = true;
+          try {
+            await Admin.save("athletes", row);
+            reset();
+            await load();
+          } finally {
+            go.disabled = false;
+          }
         });
 
         function rowHtml(r) {

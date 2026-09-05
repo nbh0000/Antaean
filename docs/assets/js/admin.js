@@ -12,7 +12,7 @@ window.Admin = (function () {
     { href: "programs.html",  label: "프로그램",   key: "programs" },
     { href: "schedules.html", label: "시간표",     key: "schedules" },
     { href: "coaches.html",   label: "지도자",     key: "coaches" },
-    { href: "athletes.html",  label: "선수단",     key: "athletes" },
+    { href: "athletes.html",  label: "Team Antaean",     key: "athletes" },
     { href: "gallery.html",   label: "갤러리",     key: "gallery" },
     { href: "daily.html",     label: "클럽 일상",  key: "daily" },
     { href: "competitions.html", label: "대회 기록", key: "competitions" },

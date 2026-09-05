@@ -66,7 +66,7 @@ build songdo.html     body-songdo.html     songdo     "송도점 | 엔티언펜�
 build baegot.html     body-baegot.html     baegot     "배곧점 | 엔티언펜싱클럽"        hero
 build facilities.html body-facilities.html facilities "시설안내 | 엔티언펜싱클럽"      hero
 build fencing.html    body-fencing.html    fencing    "펜싱 정보 | 엔티언펜싱클럽"     solid
-build athletes.html   body-athletes.html   athletes   "선수단 | 엔티언펜싱클럽"        solid
+build athletes.html   body-athletes.html   athletes   "Team Antaean | 엔티언펜싱클럽"        solid
 build community.html  body-community.html  community  "커뮤니티 | 엔티언펜싱클럽"      solid
 build privacy.html    body-privacy.html    privacy    "개인정보처리방침 | 엔티언펜싱클럽" solid
 build 404.html        body-404.html        notfound   "페이지를 찾을 수 없습니다 | 엔티언펜싱클럽" solid

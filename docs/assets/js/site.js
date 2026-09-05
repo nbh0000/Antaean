@@ -231,14 +231,16 @@
       btn.disabled = true;
       btn.textContent = "전송 중…";
 
-      var sent = true;
+      /* 접수되지 않았는데 완료 화면을 보여 주면 신청이 그냥 사라진다.
+         저장이 확인된 경우에만 완료 화면으로 넘어간다. */
+      var sent = false;
       if (window.AF && AF.ready) {
         var res = await AF.client.from("inquiries").insert(row);
-        if (res.error) {
-          sent = false;
-          console.error("[apply]", res.error);
-          window.alert("신청을 접수하지 못했습니다. 잠시 후 다시 시도하시거나 전화로 문의해 주세요.");
-        }
+        if (res.error) console.error("[apply]", res.error);
+        else sent = true;
+      }
+      if (!sent) {
+        window.alert("신청을 접수하지 못했습니다. 잠시 후 다시 시도하시거나 전화로 문의해 주세요.");
       }
       btn.disabled = false;
       btn.textContent = label;

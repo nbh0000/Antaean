@@ -11,6 +11,31 @@
 
   var esc = AF.esc;
 
+  /* 새로 그린 영역을 곧바로 보이게 한다.
+     스크롤 등장 효과(.rv / .rv--clip)는 site.js 가 페이지를 읽을 때 한 번만
+     감시를 걸기 때문에, 뒤늦게 그린 요소는 스스로 is-in 을 붙여야 한다. */
+  function reveal(root) {
+    root.querySelectorAll(".rv, .rv--clip").forEach(function (el) {
+      el.classList.add("is-in");
+    });
+    if (root.classList) root.classList.add("is-in");
+  }
+
+  /* 뒤늦게 그린 수상내역 접기 버튼에 동작을 붙인다. */
+  function bindAcc(root) {
+    root.querySelectorAll("[data-acc]").forEach(function (btn) {
+      if (btn._bound) return;
+      btn._bound = true;
+      btn.addEventListener("click", function () {
+        var panel = document.getElementById(btn.getAttribute("aria-controls"));
+        if (!panel) return;
+        var open = btn.getAttribute("aria-expanded") !== "true";
+        btn.setAttribute("aria-expanded", String(open));
+        panel.classList.toggle("is-open", open);
+      });
+    });
+  }
+
   /* ---------- 공지 ---------- */
   function noticeHref(id) {
     return "community.html?notice=" + encodeURIComponent(id) + "#community-notice";
@@ -156,58 +181,88 @@
   }
 
   /* ---------- 지도자 ----------
-     관리자에 등록된 지도자가 있으면 이름으로 짝을 지어 사진과 각 항목을
-     모두 관리자 값으로 바꾼다. 항목이 비어 있으면 그 블록을 감춘다.
-     DB 에 없는 지도자는 HTML 원본 그대로 둔다. */
-  var COACH_FIELDS = ["education", "career", "certificates", "coaching", "awards"];
+     DB 에 지도자가 한 명이라도 있으면 강사진 페이지의 카드를 전부 다시 그린다.
+     그래야 관리자에서 지도자를 추가·삭제하거나 HTML 에 없던 항목(선수경력·
+     자격증 등)을 채웠을 때도 그대로 반영된다. 직책에 "코치"가 들어 있으면
+     코치 탭, 그 밖에는 감독 탭에 넣는다. */
+  var COACH_FIELDS = ["education", "career", "certificates", "coaching"];
+  var COACH_LABEL = {
+    education: "학력", career: "선수경력", certificates: "자격증", coaching: "지도경력"
+  };
+
+  function coachCard(c, key) {
+    var photo = c.photo_url
+      ? '<img src="' + esc(c.photo_url) + '" alt="' + esc(c.name) + '">'
+      : '<span class="coach__initial">' + esc(String(c.name || "").slice(0, 1)) + "</span>";
+
+    var blocks = COACH_FIELDS.map(function (f) {
+      var ls = AF.lines(c[f]);
+      if (!ls.length) return "";
+      return '<div class="coach__block"><h4>' + COACH_LABEL[f] + "</h4><ul>" +
+        ls.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") +
+        "</ul></div>";
+    }).join("");
+
+    var awards = AF.lines(c.awards);
+    var accId = "awards-" + key;
+    var acc = awards.length
+      ? '<div class="acc">' +
+          '<button class="acc__btn" type="button" data-acc aria-expanded="false" aria-controls="' +
+            accId + '">수상내역</button>' +
+          '<div class="acc__body coach__block" id="' + accId + '"><ul>' +
+            awards.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") +
+          "</ul></div>" +
+        "</div>"
+      : "";
+
+    return '<article class="coach rv is-in">' +
+      "<div>" +
+        '<div class="coach__photo rv rv--zoom is-in">' + photo + "</div>" +
+      "</div><div>" +
+        '<h2 class="coach__name">' + esc(c.name) + "</h2>" +
+        (c.title ? '<p class="coach__role">' + esc(c.title) + "</p>" : "") +
+        blocks + acc +
+      "</div></article>";
+  }
 
   async function coaches() {
     var photos = document.querySelectorAll("[data-live=coach-photo]");
     var cards = document.querySelectorAll("[data-live-coach]");
-    if (!photos.length && !cards.length) return;
-    var rows = await AF.list("coaches");
+    var director = document.querySelector('[data-tabpanel="staff-director"]');
+    var coachPanel = document.querySelector('[data-tabpanel="staff-coach"]');
+    if (!photos.length && !cards.length && !director) return;
+    var rows = await AF.list("coaches", function (q) { return q.order("sort"); });
     if (!rows.length) return;
+
+    /* 강사진 페이지: 카드를 통째로 다시 그린다. */
+    if (director && coachPanel) {
+      var groups = { director: [], coach: [] };
+      rows.forEach(function (c) {
+        groups[/코치/.test(c.title || "") ? "coach" : "director"].push(c);
+      });
+      [[director, groups.director, "d"], [coachPanel, groups.coach, "c"]]
+        .forEach(function (pair) {
+          var panel = pair[0], list = pair[1], p = pair[2];
+          panel.innerHTML = list.length
+            ? list.map(function (c, i) { return coachCard(c, p + i); }).join("")
+            : '<div class="empty">등록된 지도자가 없습니다.</div>';
+          reveal(panel);
+          bindAcc(panel);
+        });
+      return;
+    }
+
+    /* 그 밖의 페이지: 이름(없으면 순서)으로 짝지어 값만 채운다. */
     var byName = {};
     rows.forEach(function (c) { byName[c.name] = c; });
-
-    /* 관리자에서 이름을 바꾸면 이름으로는 짝이 안 맞는다.
-       그럴 때를 대비해 표시 순서대로도 짝지을 수 있게 해 둔다. */
-    var ordered = rows.slice().sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); });
-    var cardList = Array.prototype.slice.call(cards);
-    function pick(key, idx) { return byName[key] || ordered[idx] || null; }
-
     photos.forEach(function (el, idx) {
-      var c = pick(el.dataset.name, idx);
+      var c = byName[el.dataset.name] || rows[idx];
       if (!c || !c.photo_url) return;
       el.innerHTML = '<img src="' + esc(c.photo_url) + '" alt="' + esc(c.name) + '">';
     });
-
-    cardList.forEach(function (card, idx) {
-      var c = pick(card.dataset.liveCoach, idx);
-      if (!c) return;
-
-      var nameEl = card.querySelector('[data-coach-field="name"]');
-      if (nameEl && c.name) nameEl.textContent = c.name;
-      var titleEl = card.querySelector('[data-coach-field="title"]');
-      if (titleEl) {
-        if (c.title) { titleEl.textContent = c.title; titleEl.hidden = false; }
-        else { titleEl.hidden = true; }
-      }
-
-      COACH_FIELDS.forEach(function (f) {
-        var ul = card.querySelector('[data-coach-field="' + f + '"]');
-        if (!ul) return;
-        var block = ul.closest("[data-coach-block]");
-        var lines = AF.lines(c[f]);
-        if (!lines.length) { if (block) block.hidden = true; return; }
-        if (block) block.hidden = false;
-        ul.innerHTML = lines.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("");
-      });
-    });
   }
 
-
-  /* ---------- 선수단 ----------
+  /* ---------- Team Antaean (선수단) ----------
      DB에 선수가 한 명이라도 있으면 정적 자리표시자를 전부 걷어내고
      등록된 선수만 보여 준다. 아무도 없으면 HTML 원본을 그대로 둔다. */
   async function athletes() {
@@ -232,7 +287,7 @@
           ? '<img src="' + esc(a.photo_url) + '" alt="' + esc(a.name) + '" loading="lazy">'
           : '<span class="coach__initial">' + esc(a.name.slice(0, 1)) + "</span>";
         return '<article class="athlete rv">' +
-          '<div class="athlete__photo rv--clip">' + photo + "</div>" +
+          '<div class="athlete__photo rv rv--clip">' + photo + "</div>" +
           '<div class="athlete__body">' +
           "<strong>" + esc(a.name) + "</strong>" +
           (a.intro ? "<p>" + esc(a.intro) + "</p>" : "") +
@@ -242,7 +297,9 @@
             : "") +
           "</div></article>";
       }).join("");
-      grid.querySelectorAll(".rv").forEach(function (el) { el.classList.add("is-in"); });
+      /* 나중에 그린 요소는 site.js 의 스크롤 감시 대상이 아니다.
+         is-in 을 직접 붙이지 않으면 rv--clip 이 clip-path 로 잘라 버린다. */
+      reveal(grid);
     });
   }
 
