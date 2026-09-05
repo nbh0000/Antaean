@@ -280,6 +280,10 @@ body.mnav-open .burger span:nth-child(3) { transform: translateY(-6px) rotate(-4
 .btn--line { border-color: var(--navy); color: var(--navy); }
 .btn--line:hover { background: var(--navy); color: var(--white); }
 
+/* 버튼 앞 아이콘 (네이버 지도·전화·인스타그램·카카오톡) */
+.btn__ico { width: 18px; height: 18px; flex: 0 0 auto; }
+.branch__links .btn__ico { width: 17px; height: 17px; }
+
 /* piste line motif */
 .piste-line { stroke: var(--yellow); fill: none; }
 
